@@ -1,0 +1,61 @@
+name: 'Test-Update-inspection-rts-Module'
+env:
+  deploy: "ver-${{ github.sha }}"
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:  
+  Terraform:
+    name: Test code
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+    
+    # Download your code 
+    steps:
+    - uses: actions/checkout@v3
+      name: Checkout source code
+      
+    # Check your code wit TFLint
+    - uses: actions/cache@v3
+      name: Cache plugin dir
+      with:
+        path: ~/.tflint.d/plugins
+        key: ${{ matrix.os }}-tflint-${{ hashFiles('.tflint.hcl') }}
+
+    - uses: terraform-linters/setup-tflint@v3
+      name: Setup TFLint
+      with:
+        tflint_version: v0.44.1
+
+    - name: Init TFLint
+      run: tflint --init
+
+    - name: Results TFLint
+      run: tflint -f compact --force
+    
+    # Install TFSec and check your security weakness
+    - name: Install TFSec
+      uses: actions/checkout@master
+    - name: Check your code with TFSec
+      uses: aquasecurity/tfsec-pr-commenter-action@v1.2.0
+      with:
+          tfsec_args: --soft-fail
+          github_token: ${{ github.token }}
+          tfsec_formats: checkstyle
+    - name: TFSec Results
+      run: cat results.checkstyle.xml
+      
+    # Add package version to job
+    - name: Show Deploy package version
+      run: echo "Deploy package version is ${{env.deploy}}"
