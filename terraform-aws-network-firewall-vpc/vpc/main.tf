@@ -65,7 +65,6 @@ module "vpc" {
   firewall_subnet_tags      = var.firewall_subnet_tags
   firewall_route_table_tags = var.firewall_route_table_tags
 
-
   # VPC Flow Logs
   enable_flow_log                   = var.enable_flow_log
   flow_log_traffic_type             = var.flow_log_traffic_type
